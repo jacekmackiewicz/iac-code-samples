@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceGroup": {
+            "value": "FieldSolution-CI"
+        },
+        "location": {
+            "value": "sth"
+        },
+        "virtualMachineName": {
+            "value": "UbuntuDev"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_A2_v2"
+        },
+        "adminUsername": {
+            "value": "powel"
+        },
+        "virtualNetworkName": {
+            "value": "FieldSolution-vnet-dev"
+        },
+        "networkInterfaceName": {
+            "value": "ubuntu43"
+        },
+        "networkSecurityGroupName": {
+            "value": "Ubuntu-nsg-dev"
+        },
+        "adminPassword": {
+            "value": null
+        },
+        "subnetName": {
+            "value": "default"
+        },
+        "publicIpAddressName": {
+            "value": "Ubuntu-ip-dev"
+        },
+        "publicIpAddressType": {
+            "value": "Static"
+        },
+        "publicIpAddressSku": {
+            "value": "Basic"
+        }
+    }
+}

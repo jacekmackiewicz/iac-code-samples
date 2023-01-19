@@ -1,0 +1,59 @@
+---
+
+- name: Download certbot
+  get_url: url=https://dl.eff.org/certbot-auto dest={{ certbot_script }} mode=0755
+
+- name: "APT cache should be updated"
+  apt:
+    update_cache: yes
+
+- name: "Package 'software-properties-common' should be installed"
+  apt:
+    name: "apt-transport-https"
+    state: "present"
+
+- name: "Enable universe repository"
+  apt_repository:
+    repo: "deb http://us.archive.ubuntu.com/ubuntu bionic universe"
+    state: present
+
+- name: "Certbot repository package should be installed"
+  apt_repository:
+    repo: "ppa:certbot/certbot"
+    state: present
+
+- name: "APT cache should be updated"
+  shell: |
+    apt-get update -y -qq
+    dpkg-reconfigure libc6
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get -q --option "Dpkg::Options::=--force-confold" --assume-yes install libssl1.1
+  
+- name: Check if Nginx exists
+  stat: path=/etc/init.d/nginx
+  register: nginx_status
+
+- name: Ensure Nginx is stopped
+  service: name=nginx state=stopped
+  when: nginx_status.stat.exists
+
+- name: Install certbot and generate cert
+  command: "{{ certbot_script }} certonly --noninteractive --agree-tos --standalone --preferred-challenges=http --email {{ certbot_admin_email }} -d {{ inventory_hostname }}"
+  args:
+    creates: "{{ certbot_output_dir }}"
+
+- name: Generate DH Parameters with a different size (2048 bits)
+  openssl_dhparam:
+    path: /etc/ssl/dhparams.pem
+    size: 2048
+
+- name: Ensure Nginx is started
+  service: name=nginx state=started
+  when: nginx_status.stat.exists
+
+- name: Ensure a cron job to auto-renew the cert exists
+  cron: name="daily auto renew cert"
+        special_time=daily
+        job="{{ certbot_script }} renew --standalone --no-self-upgrade --pre-hook \"service nginx stop\" --post-hook \"service nginx start\" --quiet"
+        state=present
+  when: certbot_auto_renew

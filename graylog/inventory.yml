@@ -1,0 +1,12 @@
+# Replace secrets from respective key vault addresses
+all:
+    hosts:
+        graylog-dev.domain.com:
+            graylog_password_secret: "https://keyvault/secret/version"
+            graylog_root_password_sha2: "https://keyvault/secret/version"
+        graylog-stack-qa.domain.net:
+            graylog_password_secret: "https://keyvault/secret/version"
+            graylog_root_password_sha2: "https://keyvault/secret/version"
+        graylog.domain.net:
+            graylog_password_secret: "https://keyvault/secret/version"
+            graylog_root_password_sha2: "https://keyvault/secret/version"
