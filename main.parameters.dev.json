@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "allowedIPs": {
+      "value": [
+        {
+          "ipAddress": "1.2.3.4/32",
+          "priority": "100",
+          "name": "AllowJacek"
+        }
+      ]
+    },
+    "appServicePlanSku": {
+      "value": {
+        "name": "B2",
+        "tier": "Basic"
+      }
+    },
+    "dotnetEnvironment": {
+      "value": "Development"
+    },
+    "environmentName": {
+      "value": "dev"
+    },
+    "storageAccountSku": {
+      "value": "Standard_LRS"
+    }
+  }
+}
