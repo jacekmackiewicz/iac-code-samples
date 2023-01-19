@@ -1,0 +1,77 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - ops/*
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - ops/*
+resources:
+- repo: self
+pool:
+  vmImage: windows-2019
+
+stages:
+- stage: Build_project_and_docker
+  jobs:
+  - job: Build_project_and_docker
+    workspace:
+      clean: all
+    steps:
+    - template: templates/buildAndTestProject.yml
+      parameters:
+        BuildProject: 'project-receiver.sln'
+        BuildPlatform: 'Win32'
+        BuildConfiguration: 'Release'
+    - template: templates/buildDocker.yml
+      parameters:
+        registryServiceConnection1: 'sharedregistryqa'
+        registryServiceConnection2: 'registryprod'
+        imageRepository: 'projectworker'
+- stage: Deploy_QA
+  condition: contains(variables['Build.SourceBranch'], 'refs/heads/master')
+  jobs:
+  - template: templates/deployAKS.yml
+    parameters:
+      environmentDevops: 'QAShared'
+      runEnvironment: 'QA'
+      registryUrl: 'projectworkerregistryqa.azurecr.io'
+      imageRepository: 'projectworker'
+      keyVaultUrl: 'keyvault.vault.azure.net'
+      subscriptionServiceConnection: 'Prod'
+      keyVaultName: 'keyvault'
+      secretsNames: 'KeyVaultClientId,KeyVaultClientSecret'
+      kubernetesServiceConnection: 'shared-aks-qa'
+      kubernetesNamespace: 'project-qa'
+      containerName: 'projectworkerregistryqa.azurecr.io/projectworker:$(Build.BuildNumber)'
+      tracingVersion: 'Experimental'
+      graylogHost: 'gelf.graylog.domain.com'
+      graylogPort: '12201'
+      logToGraylog: true
+- stage: Deploy_PROD
+  condition: contains(variables['Build.SourceBranch'], 'refs/heads/master')
+  jobs:
+  - template: templates/deployAKS.yml
+    parameters:
+      environmentDevops: 'Production'
+      runEnvironment: 'Production'
+      registryUrl: 'projectworkerregistryprod.azurecr.io'
+      imageRepository: 'projectworker'
+      keyVaultUrl: 'keyvault.vault.azure.net'
+      subscriptionServiceConnection: 'Prod'
+      keyVaultName: 'keyvault'
+      secretsNames: 'KeyVaultClientId,KeyVaultClientSecret'
+      kubernetesServiceConnection: 'project-aks-prod'
+      kubernetesNamespace: 'production'
+      containerName: 'projectregistryprod.azurecr.io/projectworker:$(Build.BuildNumber)'
+      tracingVersion: 'Experimental'
+      graylogHost: 'gelf.graylog.domain.com'
+      graylogPort: '12201'
+      logToGraylog: true
