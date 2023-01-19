@@ -1,4 +1,3 @@
----
 ### This file describes the steps to deploy a new environment of Project solution ###
 
 # Deploy ARM templates in a sequence provided by folder names.
@@ -23,5 +22,3 @@ https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-tem
 6. Disable any SSH or RDP port access on VMs.
 7. Add dedicated app to key vault access policy.
 8. Apply migration on SQL Database.
-
----
