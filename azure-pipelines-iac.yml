@@ -1,0 +1,70 @@
+resources:
+  repositories:
+  - repository: InfrastructureGitHubRepo
+    type: github
+    endpoint: Company
+    name: Company/project-infrastructure
+
+trigger:
+- main
+
+name: Deploy Bicep files
+
+variables:
+  vmImageName: 'ubuntu-latest'
+  azureServiceConnection: 'Project Dev'
+  resourceGroupName: 'project-dev'
+  location: 'northeurope'
+  templateFile: 'main.bicep'
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+- stage: DNS
+  jobs:
+  - job: DNS
+    steps:
+    - checkout: InfrastructureGitHubRepo 
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'Project Prod'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az --version
+          az group create --name 'project-dns' --location $(location)
+          az deployment group validate --mode Complete --resource-group project-dns --template-file 'dns/dns.bicep'
+          az deployment group create --mode Complete --resource-group project-dns --template-file 'dns/dns.bicep'
+- stage: Development
+  jobs:
+  - job: Development
+    steps:
+    - checkout: InfrastructureGitHubRepo 
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az --version
+          az group create --name $(resourceGroupName) --location $(location)
+          az deployment group validate --mode Complete --resource-group $(resourceGroupName) --template-file $(templateFile) --parameters @main.parameters.dev.json
+          az deployment group create --mode Complete --resource-group $(resourceGroupName) --template-file $(templateFile) --parameters @main.parameters.dev.json
+- stage: Demo
+  variables:
+    resourceGroupName: 'project-demo'
+  jobs:
+  - job: Demo
+    steps:
+    - checkout: InfrastructureGitHubRepo 
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az --version
+          az group create --name $(resourceGroupName) --location $(location)
+          az deployment group validate --mode Complete --resource-group $(resourceGroupName) --template-file $(templateFile) --parameters @main.parameters.demo.json
+          az deployment group create --mode Complete --resource-group $(resourceGroupName) --template-file $(templateFile) --parameters @main.parameters.demo.json
